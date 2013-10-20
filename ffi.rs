@@ -16,6 +16,7 @@ extern "C stdcall" {
 	pub fn FreeImage_GetWidth( dib: *Bitmap ) -> c_uint;
 	pub fn FreeImage_GetHeight( dib: *Bitmap ) -> c_uint;
 	pub fn FreeImage_GetPitch( dib: *Bitmap ) -> c_uint;
+	pub fn FreeImage_GetBPP( dib: *Bitmap ) -> c_uint;
 	pub fn FreeImage_GetBits( dib: *Bitmap ) -> *u8;
 	pub fn FreeImage_GetScanLine( dib: *Bitmap, scanline: c_int ) -> *u8;
 }

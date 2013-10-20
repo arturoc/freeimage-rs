@@ -81,6 +81,11 @@ impl Bitmap {
 	}
 
 	#[fixed_stack_segment] #[inline(never)]
+	pub fn get_bpp(&self) -> uint {
+		unsafe { return ffi::FreeImage_GetBPP( self.ptr ) as uint; }
+	}
+
+	#[fixed_stack_segment] #[inline(never)]
 	pub fn get_pitch(&self) -> uint {
 		unsafe { return ffi::FreeImage_GetPitch( self.ptr ) as uint; }
 	}
