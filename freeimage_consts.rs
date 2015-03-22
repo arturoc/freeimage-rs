@@ -1,4 +1,5 @@
 #[repr(C)]
+#[derive(Eq,PartialEq,Copy)]
 pub enum FormatIdentifier {
 	UNKNOWN	= -1,
 	BMP		= 0,

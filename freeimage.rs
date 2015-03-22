@@ -1,32 +1,28 @@
-#[link(name = "freeimage",
-	vers = "0.1",
-	uuid = "57e00cd0-19ab-11e3-8ffd-0800200c9a66",
-	author = "Tomasz Stachowiak",
-	url = "https://github.com/h3r2tic/freeimage-rs")];
+#![crate_name = "freeimage"]
+#![crate_type = "lib"]
+#![allow(non_camel_case_types)]
 
-#[comment = "Bindings and wrapper functions for FreeImage."];
-#[crate_type = "lib"];
-#[feature(globs)];
+extern crate libc;
+extern crate core;
 
 
 // TODO: Document differences between GLFW and glfw-rs
 
-use std::libc::*;
-use std::ptr;
-//use std::str;
-//use std::vec;
+use libc::*;
+use std::slice;
+use core::intrinsics::transmute;
+use std::ffi::CString;
 
 // re-export constants
-pub use consts::*;
+pub use freeimage_consts::*;
 
 pub mod ffi;
-pub mod consts;
+pub mod freeimage_consts;
 //mod private;
 
 
-#[deriving(Eq, IterBytes)]
 pub struct Bitmap {
-    ptr: *ffi::Bitmap,
+    ptr: *const ffi::FIBITMAP,
 }
 
 impl Drop for Bitmap {
@@ -42,9 +38,7 @@ pub fn init() {
 
 pub fn get_file_type(filename: &str) -> FormatIdentifier {
 	unsafe {
-		filename.with_c_str( |fname| {
-			ffi::FreeImage_GetFileType( fname, 0 )
-		})
+		ffi::FreeImage_GetFileType( CString::from_slice(filename.as_bytes()).as_ptr(), 0 )
 	}
 }
 
@@ -56,18 +50,33 @@ pub fn supports_reading(fif: FormatIdentifier) -> bool {
 
 impl Bitmap {
 
-	pub fn load(fif: FormatIdentifier, filename: &str) -> Result<Bitmap,~str> {
+	pub fn load(fif: FormatIdentifier, filename: &str) -> Result<Bitmap,&'static str> {
 		unsafe {
-			filename.with_c_str( |fname| {
-				ffi::FreeImage_Load( fif, fname, 0 )
-					.to_option().map_default(Err( ~"FreeImage_Load returned null" ),
-						| ptr | Ok(
-							Bitmap { ptr: ptr::to_unsafe_ptr( ptr ) }
-						)
-					)
-			})
+			match ffi::FreeImage_Load( fif, CString::from_slice(filename.as_bytes()).as_ptr(), 0 ).as_ref(){
+				Some(ptr) => Ok(Bitmap { ptr: transmute(ptr) }),
+				None      => Err( "FreeImage_Load returned null" )
+			}
 		}
 	}
+    
+    pub fn new_from_buffer(buffer: Vec<u8>) -> Result<Bitmap,&'static str> {
+		unsafe {
+            match ffi::FreeImage_OpenMemory( transmute(buffer.as_ptr()), buffer.len() as u32 ).as_ref(){
+                Some(hmem) => {
+                    let fif = ffi::FreeImage_GetFileTypeFromMemory(transmute(hmem), 0);
+                    if fif!=FormatIdentifier::UNKNOWN{
+                        match ffi::FreeImage_LoadFromMemory(fif,transmute(hmem),0).as_ref(){
+                            Some(ptr)   => Ok(Bitmap { ptr: transmute(ptr) }),
+                            None        => Err( "FreeImage_LoadFromMemory returned null" )
+                        }
+                    }else{
+                        Err( "FreeImage_GetFileTypeFromMemory returned UNKOWN" )
+                    }
+                }
+                None      => Err( "FreeImage_OpenMemory returned null" )
+            }
+		}
+    }
 
 
 	pub fn get_width(&self) -> uint {
@@ -90,35 +99,35 @@ impl Bitmap {
 	}
 
 
-	fn get_bits_unsafe(&self) -> *u8 {
-		unsafe { ffi::FreeImage_GetBits( self.ptr ) }
+	fn get_bits_unsafe(&self) -> *const u8 {
+		unsafe { ffi::FreeImage_GetBits( self.ptr ) as *const u8}
 	}
 
 
-	fn get_scanline_unsafe(&self, scanline: uint) -> *u8 {
-		unsafe { ffi::FreeImage_GetScanLine( self.ptr, scanline as c_int ) }
+	fn get_scanline_unsafe(&self, scanline: uint) -> *const u8 {
+		unsafe { ffi::FreeImage_GetScanLine( self.ptr, scanline as c_int ) as *const u8}
 	}
 
-	pub fn get_bits<U>(&self, f: |&[u8]| -> U) -> U {
+	pub fn get_bits<U,T: Fn(&[u8]) -> U>(&self, f: T) -> U {
 		let pitch = self.get_pitch();
 		let height = self.get_height();
-
-		unsafe { std::vec::raw::buf_as_slice( self.get_bits_unsafe(), pitch * height, f ) }
+		
+		unsafe{ f(slice::from_raw_buf( &self.get_bits_unsafe(), pitch * height)) }
 	}
 
-	pub fn get_scanline<U>(&self, scanline: uint, f: |&[u8]| -> U) -> U {
+	pub fn get_scanline<U, T: Fn(&[u8]) -> U>(&self, scanline: uint, f: T) -> U {
 		let pitch = self.get_pitch();
 		let height = self.get_height();
 
 		if scanline >= height {
-			fail!( "Scanline index out of bounds: {:?} out of {:?}", scanline, height )
+			panic!( "Scanline index out of bounds: {:?} out of {:?}", scanline, height )
 		} else {
 			let bits = self.get_scanline_unsafe( scanline );
 
-			if std::ptr::is_null( bits ) {
-				fail!( "FreeImage_GetScanLine returned null" )
+			if bits.is_null() {
+				panic!( "FreeImage_GetScanLine returned null" )
 			} else {
-				unsafe { std::vec::raw::buf_as_slice( bits, pitch, f ) }
+				unsafe{ f(slice::from_raw_buf( &bits, pitch )) }
 			}
 		}
 	}

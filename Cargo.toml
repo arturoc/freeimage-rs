@@ -1,0 +1,8 @@
+[package]
+name    = "freeimage"
+version = "0.1.0"
+authors = [ "Arturo Castro <mail@arturocastro.net>" ] # FIXME: add the contributors.
+
+[lib]
+name = "freeimage"
+path = "freeimage.rs"
