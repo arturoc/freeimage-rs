@@ -18,8 +18,8 @@ use libc::uint16_t;
 use libc::uint8_t;
 use libc::wchar_t;
 use libc::c_void;
-use freeimage_consts;
-use core::intrinsics::transmute;
+use consts;
+use std::mem::transmute;
 
 pub type Struct__IO_FILE = c_void;
 //pub type FILE = Struct__IO_FILE;
@@ -28,6 +28,7 @@ pub type __FILE = Struct__IO_FILE;
 pub type size_t = c_ulong;
 pub type wchar_t = c_int;*/
 pub type wint_t = c_uint;
+#[repr(C)]
 pub struct Union_Unnamed1 {
     data: [u32; 1],
 }
@@ -39,12 +40,14 @@ impl Union_Unnamed1 {
         unsafe { transmute(self) }
     }
 }
+#[repr(C)]
 pub struct __mbstate_t {
     __count: c_int,
     __value: Union_Unnamed1,
 }
 pub type mbstate_t = __mbstate_t;
 pub type Struct_tm = c_void;
+#[repr(C)]
 pub struct Struct___locale_struct {
     __locales: [*const Struct___locale_data; 13],
     __ctype_b: *const c_ushort,
@@ -56,10 +59,12 @@ pub type Struct___locale_data = c_void;
 pub type __locale_t = *const Struct___locale_struct;
 pub type locale_t = __locale_t;
 pub type FIBITMAP = Struct_FIBITMAP;
+#[repr(C)]
 pub struct Struct_FIBITMAP {
     data: *const c_void,
 }
 pub type FIMULTIBITMAP = Struct_FIMULTIBITMAP;
+#[repr(C)]
 pub struct Struct_FIMULTIBITMAP {
     data: *const c_void,
 }
@@ -92,6 +97,7 @@ pub type uintptr_t = c_ulong;*/
 pub type intmax_t = c_long;
 pub type uintmax_t = c_ulong;
 pub type __gwchar_t = c_int;
+#[repr(C)]
 pub struct imaxdiv_t {
     quot: c_long,
     rem: c_long,
@@ -103,6 +109,7 @@ pub type DWORD = uint32_t;
 pub type LONG = int32_t;
 pub type FIINT64 = int64_t;
 pub type FIUINT64 = uint64_t;
+#[repr(C)]
 pub struct Struct_tagRGBQUAD {
     rgbBlue: BYTE,
     rgbGreen: BYTE,
@@ -110,12 +117,14 @@ pub struct Struct_tagRGBQUAD {
     rgbReserved: BYTE,
 }
 pub type RGBQUAD = Struct_tagRGBQUAD;
+#[repr(C)]
 pub struct Struct_tagRGBTRIPLE {
     rgbtBlue: BYTE,
     rgbtGreen: BYTE,
     rgbtRed: BYTE,
 }
 pub type RGBTRIPLE = Struct_tagRGBTRIPLE;
+#[repr(C)]
 pub struct Struct_tagBITMAPINFOHEADER {
     biSize: DWORD,
     biWidth: LONG,
@@ -131,18 +140,21 @@ pub struct Struct_tagBITMAPINFOHEADER {
 }
 pub type BITMAPINFOHEADER = Struct_tagBITMAPINFOHEADER;
 pub type PBITMAPINFOHEADER = *const Struct_tagBITMAPINFOHEADER;
+#[repr(C)]
 pub struct Struct_tagBITMAPINFO {
     bmiHeader: BITMAPINFOHEADER,
     bmiColors: [RGBQUAD; 1],
 }
 pub type BITMAPINFO = Struct_tagBITMAPINFO;
 pub type PBITMAPINFO = *const Struct_tagBITMAPINFO;
+#[repr(C)]
 pub struct Struct_tagFIRGB16 {
     red: WORD,
     green: WORD,
     blue: WORD,
 }
 pub type FIRGB16 = Struct_tagFIRGB16;
+#[repr(C)]
 pub struct Struct_tagFIRGBA16 {
     red: WORD,
     green: WORD,
@@ -150,12 +162,14 @@ pub struct Struct_tagFIRGBA16 {
     alpha: WORD,
 }
 pub type FIRGBA16 = Struct_tagFIRGBA16;
+#[repr(C)]
 pub struct Struct_tagFIRGBF {
     red: c_float,
     green: c_float,
     blue: c_float,
 }
 pub type FIRGBF = Struct_tagFIRGBF;
+#[repr(C)]
 pub struct Struct_tagFIRGBAF {
     red: c_float,
     green: c_float,
@@ -163,18 +177,20 @@ pub struct Struct_tagFIRGBAF {
     alpha: c_float,
 }
 pub type FIRGBAF = Struct_tagFIRGBAF;
+#[repr(C)]
 pub struct Struct_tagFICOMPLEX {
     r: c_double,
     i: c_double,
 }
 pub type FICOMPLEX = Struct_tagFICOMPLEX;
 pub type FIICCPROFILE = Struct_FIICCPROFILE;
+#[repr(C)]
 pub struct Struct_FIICCPROFILE {
     flags: WORD,
     size: DWORD,
     data: *const c_void,
 }
-pub type FREE_IMAGE_FORMAT = freeimage_consts::FormatIdentifier;
+pub type FREE_IMAGE_FORMAT = consts::Format;
 pub type FREE_IMAGE_TYPE = c_int;
 pub type Enum_FREE_IMAGE_TYPE = c_uint;
 pub static FIT_UNKNOWN: c_uint = 0;
@@ -282,10 +298,12 @@ pub static FIMD_ANIMATION: c_int = 9;
 pub static FIMD_CUSTOM: c_int = 10;
 pub static FIMD_EXIF_RAW: c_int = 11;
 pub type FIMETADATA = Struct_FIMETADATA;
+#[repr(C)]
 pub struct Struct_FIMETADATA {
     data: *const c_void,
 }
 pub type FITAG = Struct_FITAG;
+#[repr(C)]
 pub struct Struct_FITAG {
     data: *const c_void,
 }
@@ -305,6 +323,7 @@ pub type FI_SeekProc =
 pub type FI_TellProc =
     ::std::option::Option<extern "C" fn(arg1: fi_handle) -> c_long>;
 pub type FreeImageIO = Struct_FreeImageIO;
+#[repr(C)]
 pub struct Struct_FreeImageIO {
     read_proc: FI_ReadProc,
     write_proc: FI_WriteProc,
@@ -312,6 +331,7 @@ pub struct Struct_FreeImageIO {
     tell_proc: FI_TellProc,
 }
 pub type FIMEMORY = Struct_FIMEMORY;
+#[repr(C)]
 pub struct Struct_FIMEMORY {
     data: *const c_void,
 }
@@ -361,6 +381,7 @@ pub type FI_SupportsICCProfilesProc =
 pub type FI_SupportsNoPixelsProc =
     ::std::option::Option<extern "C" fn() -> BOOL>;
 pub type Plugin = Struct_Plugin;
+#[repr(C)]
 pub struct Struct_Plugin {
     format_proc: FI_FormatProc,
     description_proc: FI_DescriptionProc,

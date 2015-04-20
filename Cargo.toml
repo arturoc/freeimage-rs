@@ -5,4 +5,4 @@ authors = [ "Arturo Castro <mail@arturocastro.net>" ] # FIXME: add the contribut
 
 [lib]
 name = "freeimage"
-path = "freeimage.rs"
+path = "src/lib.rs"
