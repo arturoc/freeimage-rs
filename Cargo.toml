@@ -6,3 +6,9 @@ authors = [ "Arturo Castro <mail@arturocastro.net>" ] # FIXME: add the contribut
 [lib]
 name = "freeimage"
 path = "src/lib.rs"
+
+[target.i686-apple-darwin.dependencies.freeimage-sys]
+path = "../freeimage-sys"
+
+[target.x86_64-apple-darwin.dependencies.freeimage-sys]
+path = "../freeimage-sys"
