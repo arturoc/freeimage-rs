@@ -113,8 +113,8 @@ impl Bitmap {
 	}
 
 
-	fn scanline_unsafe(&self, scanline: usize) -> *const u8 {
-		unsafe { ffi::FreeImage_GetScanLine( self.ptr, scanline as libc::c_int ) as *const u8}
+	unsafe fn scanline_unsafe(&self, scanline: usize) -> *const u8 {
+		ffi::FreeImage_GetScanLine( self.ptr, scanline as libc::c_int ) as *const u8
 	}
 
 	pub fn bits(&self) -> &[u8] {
@@ -124,26 +124,26 @@ impl Bitmap {
 		unsafe{ slice::from_raw_parts( self.bits_unsafe(), pitch * height) }
 	}
 	
-	pub fn scanlines(&self) -> ScanLines{
-	    ScanLines{ ptr: self.ptr, line: 0 }
+	pub fn scanlines<'a>(&'a self) -> ScanLines<'a>{
+	    ScanLines{ bitmap: self, line: 0 }
 	}
 }
 
-pub struct ScanLines{
-    ptr: *const ffi::FIBITMAP,
+pub struct ScanLines<'a>{
+    bitmap: &'a Bitmap,
     line: usize
 }
 
-impl<'a> Iterator for ScanLines{
+impl<'a> Iterator for ScanLines<'a>{
     type Item = &'a [u8];
-    fn next(&mut self) -> Option<&[u8]>{
-		let pitch = unsafe { ffi::FreeImage_GetPitch( self.ptr ) as usize };
-		let height = unsafe { ffi::FreeImage_GetHeight( self.ptr ) as usize };
+    fn next(&mut self) -> Option<&'a [u8]>{
+		let pitch = self.bitmap.pitch();
+		let height = self.bitmap.height();
 
 		if self.line == height {
 			None
 		} else {
-			let bits = unsafe { ffi::FreeImage_GetScanLine( self.ptr, self.line as libc::c_int ) as *const u8};
+			let bits = unsafe { self.bitmap.scanline_unsafe(self.line) };
 
 			if bits.is_null() {
 				None
