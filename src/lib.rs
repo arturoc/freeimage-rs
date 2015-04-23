@@ -1,4 +1,3 @@
-#![feature(libc,core)]
 #![crate_name = "freeimage"]
 #![crate_type = "lib"]
 #![allow(non_camel_case_types,dead_code,non_snake_case,non_upper_case_globals)]
@@ -53,28 +52,32 @@ impl Bitmap {
 
 	pub fn load(fif: Format, filename: &str) -> Result<Bitmap,&'static str> {
 		unsafe {
-			match ffi::FreeImage_Load( fif, CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 ).as_ref(){
-				Some(ptr) => Ok(Bitmap { ptr: transmute(ptr) }),
-				None      => Err( "FreeImage_Load returned null" )
+			let ptr = ffi::FreeImage_Load( fif, CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 );
+			if ptr.is_null(){
+			    Err( "FreeImage_Load returned null" )
+			}else{
+				Ok(Bitmap { ptr: transmute(ptr) })
 			}
 		}
 	}
     
     pub fn load_from_memory(buffer: Vec<u8>) -> Result<Bitmap,&'static str> {
 		unsafe {
-            match ffi::FreeImage_OpenMemory( transmute(buffer.as_ptr()), buffer.len() as u32 ).as_ref(){
-                Some(hmem) => {
-                    let fif = ffi::FreeImage_GetFileTypeFromMemory(transmute(hmem), 0);
-                    if fif!=Format::UNKNOWN{
-                        match ffi::FreeImage_LoadFromMemory(fif,transmute(hmem),0).as_ref(){
-                            Some(ptr)   => Ok(Bitmap { ptr: transmute(ptr) }),
-                            None        => Err( "FreeImage_LoadFromMemory returned null" )
-                        }
+            let hmem = ffi::FreeImage_OpenMemory( transmute(buffer.as_ptr()), buffer.len() as u32 );
+            if hmem.is_null(){
+                Err( "FreeImage_OpenMemory returned null" )
+            }else{
+                let fif = ffi::FreeImage_GetFileTypeFromMemory(transmute(hmem), 0);
+                if fif!=Format::UNKNOWN{
+                    let ptr = ffi::FreeImage_LoadFromMemory(fif,transmute(hmem),0);
+                    if ptr.is_null(){
+                        Err( "FreeImage_LoadFromMemory returned null" )
                     }else{
-                        Err( "FreeImage_GetFileTypeFromMemory returned UNKOWN" )
+						Ok(Bitmap { ptr: transmute(ptr) })
                     }
+                }else{
+                    Err( "FreeImage_GetFileTypeFromMemory returned UNKOWN" )
                 }
-                None      => Err( "FreeImage_OpenMemory returned null" )
             }
 		}
     }

@@ -12,3 +12,6 @@ git = "ssh://git@bitbucket.org/arturoc/freeimage-sys"
 
 [target.x86_64-apple-darwin.dependencies.freeimage-sys]
 git = "ssh://git@bitbucket.org/arturoc/freeimage-sys"
+
+[dependencies]
+libc = "*"
