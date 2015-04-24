@@ -1,19 +1,21 @@
 [package]
 name    = "freeimage"
-version = "0.1.0"
-authors = [ "Arturo Castro <mail@arturocastro.net>" ] # FIXME: add the contributors.
+authors = [ "Arturo Castro <mail@arturocastro.net>" ]
+description = "Rust idiomatic bindings for FreeImage"
+license = "MIT"
+homepage = "https://github.com/arturoc/freeimage-rs"
+repository = "https://github.com/arturoc/freeimage-rs"
+version = "0.0.1"
 
 [lib]
 name = "freeimage"
 path = "src/lib.rs"
 
-[target.i686-apple-darwin.dependencies.freeimage-sys]
-#git = "ssh://git@bitbucket.org/arturoc/freeimage-sys"
-path = "../freeimage-sys"
+[target.i686-apple-darwin.dependencies]
+freeimage-sys = "*"
 
-[target.x86_64-apple-darwin.dependencies.freeimage-sys]
-#git = "ssh://git@bitbucket.org/arturoc/freeimage-sys"
-path = "../freeimage-sys"
+[target.x86_64-apple-darwin.dependencies]
+freeimage-sys = "*"
 
 [dependencies]
 libc = "*"
