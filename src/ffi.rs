@@ -1,4 +1,3 @@
-    
 use libc::c_int;
 use libc::c_uint;
 use libc::c_schar;
@@ -408,6 +407,9 @@ pub type FreeImage_OutputMessageFunction =
 pub type FreeImage_OutputMessageFunctionStdCall =
     ::std::option::Option<extern "C" fn
                               (arg1: FREE_IMAGE_FORMAT, arg2: *const c_schar)>;
+
+
+#[link(name="freeimage")]
 extern "C" {
     pub fn wcscpy(__dest: *const wchar_t, __src: *const wchar_t) -> *const wchar_t;
     pub fn wcsncpy(__dest: *const wchar_t, __src: *const wchar_t, __n: size_t) ->

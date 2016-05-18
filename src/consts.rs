@@ -1,5 +1,5 @@
 #[repr(C)]
-#[derive(Eq,PartialEq,Clone,Copy)]
+#[derive(Eq,PartialEq,Clone,Copy,Debug)]
 pub enum Format {
 	UNKNOWN	= -1,
 	BMP		= 0,
@@ -74,5 +74,5 @@ pub static TIFF_NONE:i32=0x0800;			// Save without any compression.
 pub static TIFF_CCITTFAX3:i32=0x1000;		// Save using CCITT Group 3 fax encoding.
 pub static TIFF_CCITTFAX4:i32=0x2000;		// Save using CCITT Group 4 fax encoding.
 pub static TIFF_LZW:i32=0x4000;			// Save using LZW compression.
-pub static TIFF_JPEG:i32=0x8000;			// Save using JPEG compression. 
+pub static TIFF_JPEG:i32=0x8000;			// Save using JPEG compression.
 //}

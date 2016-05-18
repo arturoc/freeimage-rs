@@ -19,3 +19,5 @@ freeimage-sys = "*"
 
 [dependencies]
 libc = "*"
+enum_primitive = "*"
+num = "*"
