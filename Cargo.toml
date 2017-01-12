@@ -12,12 +12,12 @@ name = "freeimage"
 path = "src/lib.rs"
 
 [target.i686-apple-darwin.dependencies]
-freeimage-sys = "*"
+freeimage-sys = "0.0.1"
 
 [target.x86_64-apple-darwin.dependencies]
-freeimage-sys = "*"
+freeimage-sys = "0.0.1"
 
 [dependencies]
-libc = "*"
+libc = "0.2.*"
 enum_primitive = "*"
-num = "*"
+num = "0.1.*"
