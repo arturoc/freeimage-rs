@@ -94,8 +94,20 @@ pub fn supports_writting(fif: Format) -> bool{
 }
 
 impl Bitmap {
+	pub fn load(filename: &str) -> Result<Bitmap,&'static str> {
+		unsafe {
+            let cname = CString::new(filename.as_bytes()).unwrap();
+            let fif = ffi::FreeImage_GetFIFFromFilename(cname.as_ptr());
+			let ptr = ffi::FreeImage_Load(fif, cname.as_ptr(), 0);
+			if ptr.is_null(){
+			    Err( "FreeImage_Load returned null" )
+			}else{
+				Ok(Bitmap { ptr: mem::transmute(ptr) })
+			}
+		}
+	}
 
-	pub fn load(fif: Format, filename: &str) -> Result<Bitmap,&'static str> {
+	pub fn load_with_format(fif: Format, filename: &str) -> Result<Bitmap,&'static str> {
 		unsafe {
 			let ptr = ffi::FreeImage_Load( fif, CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 );
 			if ptr.is_null(){
