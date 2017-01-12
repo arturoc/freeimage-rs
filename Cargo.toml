@@ -19,5 +19,5 @@ freeimage-sys = "0.0.1"
 
 [dependencies]
 libc = "0.2.*"
-enum_primitive = "*"
+enum_primitive = "0.1.*"
 num = "0.1.*"
