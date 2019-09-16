@@ -2,16 +2,18 @@
 #![crate_type = "lib"]
 #![allow(non_camel_case_types,dead_code,non_snake_case,non_upper_case_globals)]
 
-extern crate libc;
 #[macro_use] extern crate enum_primitive;
-extern crate num;
+extern crate num_traits;
+extern crate libc;
 
 
 use std::slice;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
-use num::FromPrimitive;
+use std::path::Path;
+use std::os::raw::c_int;
+use num_traits::FromPrimitive;
 
 // re-export constants
 pub use consts::*;
@@ -62,6 +64,19 @@ pub enum Filter{
 }
 }
 
+#[derive(Debug)]
+pub struct Error{
+	msg: &'static str,
+}
+
+impl ::std::fmt::Display for Error{
+	fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result{
+		fmt.write_str(self.msg)
+	}
+}
+
+impl ::std::error::Error for Error {}
+
 impl Drop for Bitmap {
 
 	fn drop( &mut self ) {
@@ -94,46 +109,47 @@ pub fn supports_writting(fif: Format) -> bool{
 }
 
 impl Bitmap {
-	pub fn load(filename: &str) -> Result<Bitmap,&'static str> {
+	pub fn load<P: AsRef<Path>>(filename: P) -> Result<Bitmap,Error> {
 		unsafe {
-            let cname = CString::new(filename.as_bytes()).unwrap();
+            let cname = CString::new(filename.as_ref().to_str().unwrap().as_bytes()).unwrap();
             let fif = ffi::FreeImage_GetFIFFromFilename(cname.as_ptr());
 			let ptr = ffi::FreeImage_Load(fif, cname.as_ptr(), 0);
 			if ptr.is_null(){
-			    Err( "FreeImage_Load returned null" )
+			    Err( Error{msg:"FreeImage_Load returned null"} )
 			}else{
 				Ok(Bitmap { ptr: mem::transmute(ptr) })
 			}
 		}
 	}
 
-	pub fn load_with_format(fif: Format, filename: &str) -> Result<Bitmap,&'static str> {
+	pub fn load_with_format<P: AsRef<Path>>(fif: Format, filename: P) -> Result<Bitmap,Error> {
 		unsafe {
-			let ptr = ffi::FreeImage_Load( fif, CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 );
+            let cname = CString::new(filename.as_ref().to_str().unwrap().as_bytes()).unwrap();
+			let ptr = ffi::FreeImage_Load( fif, cname.as_ptr(), 0 );
 			if ptr.is_null(){
-			    Err( "FreeImage_Load returned null" )
+			    Err( Error{msg:"FreeImage_Load returned null"} )
 			}else{
 				Ok(Bitmap { ptr: mem::transmute(ptr) })
 			}
 		}
 	}
 
-    pub fn load_from_memory(buffer: Vec<u8>) -> Result<Bitmap,&'static str> {
+    pub fn load_from_memory(buffer: &[u8]) -> Result<Bitmap,Error> {
 		unsafe {
             let hmem = ffi::FreeImage_OpenMemory( mem::transmute(buffer.as_ptr()), buffer.len() as u32 );
             if hmem.is_null(){
-                Err( "FreeImage_OpenMemory returned null" )
+                Err( Error{msg:"FreeImage_OpenMemory returned null"} )
             }else{
                 let fif = ffi::FreeImage_GetFileTypeFromMemory(mem::transmute(hmem), 0);
                 if fif!=Format::UNKNOWN{
                     let ptr = ffi::FreeImage_LoadFromMemory(fif,mem::transmute(hmem),0);
                     if ptr.is_null(){
-                        Err( "FreeImage_LoadFromMemory returned null" )
+                        Err( Error{msg:"FreeImage_LoadFromMemory returned null"} )
                     }else{
 						Ok(Bitmap { ptr: mem::transmute(ptr) })
                     }
                 }else{
-                    Err( "FreeImage_GetFileTypeFromMemory returned UNKOWN" )
+                    Err( Error{msg:"FreeImage_GetFileTypeFromMemory returned UNKOWN"} )
                 }
             }
 		}
@@ -159,14 +175,14 @@ impl Bitmap {
         }
     }
 
-	pub fn save(&self, filename: &str, flags: i32) -> Result<(),String>{
+	pub fn save(&self, filename: &str, flags: i32) -> Result<(),Error>{
 	    unsafe{
 	        let format = file_type_from_name(filename);
 	        if supports_writting(format){
 				ffi::FreeImage_Save(format, self.ptr, CString::new(filename.as_bytes()).unwrap().as_ptr(),flags);
                 Ok(())
 	        }else{
-                Err(format!("Format {:?} doesn't support writing", format))
+                Err(Error{msg: "Format doesn't support writing"})
             }
 	    }
 	}
@@ -205,11 +221,11 @@ impl Bitmap {
 
 
 	unsafe fn scanline_unsafe(&self, scanline: usize) -> *const u8 {
-		ffi::FreeImage_GetScanLine( self.ptr, scanline as libc::c_int ) as *const u8
+		ffi::FreeImage_GetScanLine( self.ptr, scanline as c_int ) as *const u8
 	}
 
 	unsafe fn scanline_unsafe_mut(&self, scanline: usize) -> *mut u8 {
-		ffi::FreeImage_GetScanLine( self.ptr, scanline as libc::c_int ) as *mut u8
+		ffi::FreeImage_GetScanLine( self.ptr, scanline as c_int ) as *mut u8
 	}
 
 	pub fn bits(&self) -> &[u8] {
@@ -248,26 +264,114 @@ impl Bitmap {
 	    ScanLinesMut{ bitmap: self, line: 0 }
 	}
 
-    pub fn flip_vertical(self) -> Result<Bitmap,String>{
+    pub fn flip_vertical(self) -> Result<Bitmap,Error>{
         unsafe{
             if ffi::FreeImage_FlipVertical(self.ptr) == 0{
-                Err("Couldn't flip vertically".to_string())
+                Err(Error{msg:"Couldn't flip vertically"})
             }else{
                 Ok(self)
             }
         }
     }
 
-    pub fn rescale(&self, w: usize, h: usize, filter: Filter) -> Result<Bitmap, String>{
+    pub fn rescale(&self, w: usize, h: usize, filter: Filter) -> Result<Bitmap, Error>{
         unsafe{
             let scaled_ptr = ffi::FreeImage_Rescale(self.ptr, w as i32, h as i32, filter as ffi::FREE_IMAGE_FILTER);
             if scaled_ptr == ptr::null(){
-                Err("Couldn't scale image".to_string())
+                Err(Error{msg:"Couldn't scale image"})
             }else{
                 Ok(Bitmap{ptr: scaled_ptr})
             }
         }
     }
+
+	pub fn to_4bits(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo4Bits(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 4 bits"})
+			}
+		}
+	}
+
+	pub fn to_8bits(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo8Bits(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 8 bits"})
+			}
+		}
+	}
+
+	pub fn to_greyscale(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertToGreyscale(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to greyscale bits"})
+			}
+		}
+	}
+
+	pub fn to_16bits555(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo16Bits555(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 16 bits 555"})
+			}
+		}
+	}
+
+	pub fn to_16bits565(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo16Bits565(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 16 bits 565"})
+			}
+		}
+	}
+
+	pub fn to_24bits(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo24Bits(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 24 bits"})
+			}
+		}
+	}
+
+	pub fn to_32bits(&self) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertTo32Bits(self.ptr);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to 32 bits"})
+			}
+		}
+	}
+
+	pub fn to(&self, ty: Type) -> Result<Bitmap, Error>{
+		unsafe{
+			let ptr = ffi::FreeImage_ConvertToType(self.ptr, ty as i32, 1);
+			if ptr != ptr::null() {
+				Ok(Bitmap{ptr})
+			}else{
+				Err(Error{msg: "Couldn't convert bitmap to selected type"})
+			}
+		}
+	}
 }
 
 pub struct ScanLines<'a>{
