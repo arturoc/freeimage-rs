@@ -410,6 +410,7 @@ pub type FreeImage_OutputMessageFunctionStdCall =
 
 
 #[link(name="freeimage")]
+#[cfg_attr(target_os="linux", link(name="stdc++"))]
 extern "C" {
     pub fn wcscpy(__dest: *const wchar_t, __src: *const wchar_t) -> *const wchar_t;
     pub fn wcsncpy(__dest: *const wchar_t, __src: *const wchar_t, __n: size_t) ->
