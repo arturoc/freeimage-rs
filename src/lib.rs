@@ -283,7 +283,11 @@ impl Bitmap {
                 Ok(Bitmap{ptr: scaled_ptr})
             }
         }
-    }
+	}
+
+	pub fn is_transparent(&self) -> bool {
+		unsafe{ ffi::FreeImage_IsTransparent(self.ptr) != 0 }
+	}
 
 	pub fn to_4bits(&self) -> Result<Bitmap, Error>{
 		unsafe{
