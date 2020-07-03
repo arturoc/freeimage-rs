@@ -1,9 +1,4 @@
-#![crate_name = "freeimage"]
-#![crate_type = "lib"]
 #![allow(non_camel_case_types,dead_code,non_snake_case,non_upper_case_globals)]
-
-extern crate libc;
-
 
 use std::slice;
 use std::mem;
@@ -14,11 +9,14 @@ use std::os::raw::c_int;
 
 // re-export constants
 pub use consts::*;
-pub mod ffi;
 pub mod consts;
+pub mod ffi;
+
+#[link(name="freeimage")]
+extern{}
 
 pub struct Bitmap {
-    ptr: *const ffi::FIBITMAP,
+    ptr: *mut ffi::FIBITMAP,
 }
 
 unsafe impl Send for Bitmap{}
@@ -28,7 +26,7 @@ impl Clone for Bitmap{
         Bitmap{ ptr: unsafe{ ffi::FreeImage_Clone(self.ptr) } }
     }
 }
-
+#[repr(C)]
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Type{
     UNKNOWN = 0,
@@ -46,6 +44,7 @@ pub enum Type{
     RGBAF = 12,
 }
 
+#[repr(C)]
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Filter{
     BOX = 0,
@@ -81,22 +80,22 @@ pub fn init() {
 }
 
 unsafe fn file_type(filename: &str) -> Format {
-	ffi::FreeImage_GetFileType( CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 )
+	ffi::FreeImage_GetFileType( CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 ).into()
 }
 
 unsafe fn file_type_from_name(filename: &str) -> Format {
-    ffi::FreeImage_GetFIFFromFilename(CString::new(filename.as_bytes()).unwrap().as_ptr())
+    ffi::FreeImage_GetFIFFromFilename(CString::new(filename.as_bytes()).unwrap().as_ptr()).into()
 }
 
 pub fn supports_reading(fif: Format) -> bool {
 	unsafe {
-		1 == ffi::FreeImage_FIFSupportsReading( fif )
+		1 == ffi::FreeImage_FIFSupportsReading( fif  as i32 )
 	}
 }
 
 pub fn supports_writting(fif: Format) -> bool{
     unsafe{
-        1 == ffi::FreeImage_FIFSupportsWriting( fif )
+        1 == ffi::FreeImage_FIFSupportsWriting( fif as i32 )
     }
 }
 
@@ -117,7 +116,7 @@ impl Bitmap {
 	pub fn load_with_format<P: AsRef<Path>>(fif: Format, filename: P) -> Result<Bitmap,Error> {
 		unsafe {
             let cname = CString::new(filename.as_ref().to_str().unwrap().as_bytes()).unwrap();
-			let ptr = ffi::FreeImage_Load( fif, cname.as_ptr(), 0 );
+			let ptr = ffi::FreeImage_Load( fif  as i32, cname.as_ptr(), 0 );
 			if ptr.is_null(){
 			    Err( Error{msg:"FreeImage_Load returned null"} )
 			}else{
@@ -133,7 +132,7 @@ impl Bitmap {
                 Err( Error{msg:"FreeImage_OpenMemory returned null"} )
             }else{
                 let fif = ffi::FreeImage_GetFileTypeFromMemory(mem::transmute(hmem), 0);
-                if fif!=Format::UNKNOWN{
+                if fif != Format::UNKNOWN  as i32{
                     let ptr = ffi::FreeImage_LoadFromMemory(fif,mem::transmute(hmem),0);
                     if ptr.is_null(){
                         Err( Error{msg:"FreeImage_LoadFromMemory returned null"} )
@@ -149,7 +148,7 @@ impl Bitmap {
 
     pub fn new<T: Copy>(ty: Type, width: usize, height: usize, bpp: usize, data: Option<&[T]>) -> Bitmap{
         unsafe{
-            let ptr = ffi::FreeImage_AllocateT(ty as i32, width as i32, height as i32, bpp as i32, 0, 0, 0);
+            let ptr = ffi::FreeImage_AllocateT(ty as u32, width as i32, height as i32, bpp as i32, 0, 0, 0);
             let mut bitmap = Bitmap{ ptr: ptr };
             if let Some(data) = data{
                 let bytes_per_channel = mem::size_of::<T>();
@@ -171,7 +170,7 @@ impl Bitmap {
 	    unsafe{
 	        let format = file_type_from_name(filename);
 	        if supports_writting(format){
-				ffi::FreeImage_Save(format, self.ptr, CString::new(filename.as_bytes()).unwrap().as_ptr(),flags);
+				ffi::FreeImage_Save(format as i32, self.ptr, CString::new(filename.as_bytes()).unwrap().as_ptr(),flags);
                 Ok(())
 	        }else{
                 Err(Error{msg: "Format doesn't support writing"})
@@ -194,7 +193,7 @@ impl Bitmap {
 	}
 
     pub fn ty(&self) -> Type{
-        unsafe{ mem::transmute(ffi::FreeImage_GetImageType( self.ptr ) as u8) }
+        unsafe{ mem::transmute(ffi::FreeImage_GetImageType( self.ptr )) }
     }
 
 
@@ -269,7 +268,7 @@ impl Bitmap {
     pub fn rescale(&self, w: usize, h: usize, filter: Filter) -> Result<Bitmap, Error>{
         unsafe{
             let scaled_ptr = ffi::FreeImage_Rescale(self.ptr, w as i32, h as i32, filter as ffi::FREE_IMAGE_FILTER);
-            if scaled_ptr == ptr::null(){
+            if scaled_ptr == ptr::null_mut(){
                 Err(Error{msg:"Couldn't scale image"})
             }else{
                 Ok(Bitmap{ptr: scaled_ptr})
@@ -284,7 +283,7 @@ impl Bitmap {
 	pub fn to_4bits(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo4Bits(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 4 bits"})
@@ -295,7 +294,7 @@ impl Bitmap {
 	pub fn to_8bits(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo8Bits(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 8 bits"})
@@ -306,7 +305,7 @@ impl Bitmap {
 	pub fn to_greyscale(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertToGreyscale(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to greyscale bits"})
@@ -317,7 +316,7 @@ impl Bitmap {
 	pub fn to_16bits555(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo16Bits555(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 16 bits 555"})
@@ -328,7 +327,7 @@ impl Bitmap {
 	pub fn to_16bits565(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo16Bits565(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 16 bits 565"})
@@ -339,7 +338,7 @@ impl Bitmap {
 	pub fn to_24bits(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo24Bits(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 24 bits"})
@@ -350,7 +349,7 @@ impl Bitmap {
 	pub fn to_32bits(&self) -> Result<Bitmap, Error>{
 		unsafe{
 			let ptr = ffi::FreeImage_ConvertTo32Bits(self.ptr);
-			if ptr != ptr::null() {
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to 32 bits"})
@@ -360,8 +359,8 @@ impl Bitmap {
 
 	pub fn to(&self, ty: Type) -> Result<Bitmap, Error>{
 		unsafe{
-			let ptr = ffi::FreeImage_ConvertToType(self.ptr, ty as i32, 1);
-			if ptr != ptr::null() {
+			let ptr = ffi::FreeImage_ConvertToType(self.ptr, ty as u32, 1);
+			if !ptr.is_null() {
 				Ok(Bitmap{ptr})
 			}else{
 				Err(Error{msg: "Couldn't convert bitmap to selected type"})

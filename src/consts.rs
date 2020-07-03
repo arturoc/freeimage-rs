@@ -1,3 +1,5 @@
+use std::mem;
+
 #[repr(C)]
 #[derive(Eq,PartialEq,Clone,Copy,Debug)]
 pub enum Format {
@@ -38,6 +40,12 @@ pub enum Format {
 	PFM		= 32,
 	PICT	= 33,
 	RAW		= 34
+}
+
+impl From<i32> for Format {
+	fn from(n: i32) -> Format {
+		unsafe{ mem::transmute(n) }
+	}
 }
 
 //pub enum SaveFlags{

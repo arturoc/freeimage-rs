@@ -13,5 +13,7 @@ path = "src/lib.rs"
 
 [dependencies]
 freeimage-sys = "3.18.0"
-libc = "0.2"
 
+
+[patch.crates-io]
+freeimage-sys = { path = "../freeimage-sys" }
