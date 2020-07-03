@@ -13,6 +13,7 @@ pub mod consts;
 pub mod ffi;
 
 #[link(name="freeimage")]
+#[cfg_attr(all(target_os="linux", debug_assertions), link(name="stdc++"))]
 extern{}
 
 pub struct Bitmap {
