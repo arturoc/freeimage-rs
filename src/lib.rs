@@ -2,8 +2,6 @@
 #![crate_type = "lib"]
 #![allow(non_camel_case_types,dead_code,non_snake_case,non_upper_case_globals)]
 
-#[macro_use] extern crate enum_primitive;
-extern crate num_traits;
 extern crate libc;
 
 
@@ -13,7 +11,6 @@ use std::ptr;
 use std::ffi::CString;
 use std::path::Path;
 use std::os::raw::c_int;
-use num_traits::FromPrimitive;
 
 // re-export constants
 pub use consts::*;
@@ -32,7 +29,6 @@ impl Clone for Bitmap{
     }
 }
 
-enum_from_primitive! {
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Type{
     UNKNOWN = 0,
@@ -49,10 +45,7 @@ pub enum Type{
     RGBF = 11,
     RGBAF = 12,
 }
-}
 
-
-enum_from_primitive! {
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Filter{
     BOX = 0,
@@ -61,7 +54,6 @@ pub enum Filter{
     BICUBIC = 3,
     CATMULLROM = 4,
     LANCZOS3 = 5,
-}
 }
 
 #[derive(Debug)]
@@ -155,7 +147,7 @@ impl Bitmap {
 		}
     }
 
-    pub fn new<T: Clone>(ty: Type, width: usize, height: usize, bpp: usize, data: Option<&[T]>) -> Bitmap{
+    pub fn new<T: Copy>(ty: Type, width: usize, height: usize, bpp: usize, data: Option<&[T]>) -> Bitmap{
         unsafe{
             let ptr = ffi::FreeImage_AllocateT(ty as i32, width as i32, height as i32, bpp as i32, 0, 0, 0);
             let mut bitmap = Bitmap{ ptr: ptr };
@@ -168,7 +160,7 @@ impl Bitmap {
                         ptr::copy(line_src.as_ptr(), mem::transmute(line_dst.as_mut_ptr()), line_src.len() * bytes_per_channel);
                     }
                 }else{
-                    bitmap.pixels_mut().clone_from_slice(data);
+                    bitmap.pixels_mut().copy_from_slice(data);
                 }
             }
             bitmap
@@ -202,7 +194,7 @@ impl Bitmap {
 	}
 
     pub fn ty(&self) -> Type{
-        unsafe{ Type::from_i32(ffi::FreeImage_GetImageType( self.ptr )).unwrap() }
+        unsafe{ mem::transmute(ffi::FreeImage_GetImageType( self.ptr ) as u8) }
     }
 
 

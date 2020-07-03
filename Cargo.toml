@@ -12,8 +12,6 @@ name = "freeimage"
 path = "src/lib.rs"
 
 [dependencies]
-enum_primitive = "0.1"
-num-traits = "0.2"
 freeimage-sys = "3.18.0"
 libc = "0.2"
 

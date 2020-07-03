@@ -1,22 +1,16 @@
-use libc::c_int;
-use libc::c_uint;
-use libc::c_schar;
-use libc::c_double;
-use libc::c_long;
+use std::os::raw::c_int;
+use std::os::raw::c_uint;
+use std::os::raw::c_schar;
+use std::os::raw::c_double;
+use std::os::raw::c_long;
 use libc::size_t;
-use libc::c_longlong;
-use libc::c_ulonglong;
-use libc::c_ulong;
-use libc::c_float;
-use libc::c_ushort;
-use libc::uint64_t;
-use libc::int64_t;
-use libc::int32_t;
-use libc::uint32_t;
-use libc::uint16_t;
-use libc::uint8_t;
+use std::os::raw::c_longlong;
+use std::os::raw::c_ulonglong;
+use std::os::raw::c_ulong;
+use std::os::raw::c_float;
+use std::os::raw::c_ushort;
 use libc::wchar_t;
-use libc::c_void;
+use std::os::raw::c_void;
 use consts;
 use std::mem::transmute;
 
@@ -69,12 +63,12 @@ pub struct Struct_FIMULTIBITMAP {
 }
 /*pub type int8_t = c_schar;
 pub type int16_t = c_short;
-pub type int32_t = c_int;
-pub type int64_t = c_long;
-pub type uint8_t = c_uchar;
-pub type uint16_t = c_ushort;
-pub type uint32_t = c_uint;
-pub type uint64_t = c_ulong;
+pub type i32 = c_int;
+pub type i64 = c_long;
+pub type u8 = c_uchar;
+pub type u16 = c_ushort;
+pub type ui32 = c_uint;
+pub type u64 = c_ulong;
 pub type int_least8_t = c_schar;
 pub type int_least16_t = c_short;
 pub type int_least32_t = c_int;
@@ -101,13 +95,13 @@ pub struct imaxdiv_t {
     quot: c_long,
     rem: c_long,
 }
-pub type BOOL = int32_t;
-pub type BYTE = uint8_t;
-pub type WORD = uint16_t;
-pub type DWORD = uint32_t;
-pub type LONG = int32_t;
-pub type FIINT64 = int64_t;
-pub type FIUINT64 = uint64_t;
+pub type BOOL = i32;
+pub type BYTE = u8;
+pub type WORD = u16;
+pub type DWORD = u32;
+pub type LONG = i32;
+pub type FIINT64 = i64;
+pub type FIUINT64 = u64;
 #[repr(C)]
 pub struct Struct_tagRGBQUAD {
     rgbBlue: BYTE,
