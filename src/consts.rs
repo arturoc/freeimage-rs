@@ -1,4 +1,5 @@
 use std::mem;
+use crate::ffi;
 
 #[repr(C)]
 #[derive(Eq,PartialEq,Clone,Copy,Debug)]
@@ -46,6 +47,21 @@ impl From<i32> for Format {
 	fn from(n: i32) -> Format {
 		unsafe{ mem::transmute(n) }
 	}
+}
+
+#[repr(i32)]
+#[derive(Eq,PartialEq,Clone,Copy,Debug)]
+pub enum ColorChannel {
+	RGB = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_RGB,
+	RED = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_RED,
+	GREEN = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_GREEN,
+	BLUE = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_BLUE,
+	ALPHA = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_ALPHA,
+	BLACK = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_BLACK,
+	REAL = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_REAL,
+	IMAG = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_IMAG,
+	MAG = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_MAG,
+	PHASE = ffi::FREE_IMAGE_COLOR_CHANNEL_FICC_PHASE,
 }
 
 //pub enum SaveFlags{

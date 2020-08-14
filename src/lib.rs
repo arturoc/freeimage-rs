@@ -371,6 +371,35 @@ impl Bitmap {
 			}
 		}
 	}
+
+    pub fn red_mask(&self) -> u32 {
+        unsafe { ffi::FreeImage_GetRedMask(self.ptr) }
+    }
+
+    pub fn green_mask(&self) -> u32 {
+        unsafe { ffi::FreeImage_GetGreenMask(self.ptr) }
+    }
+
+    pub fn blue_mask(&self) -> u32 {
+        unsafe { ffi::FreeImage_GetBlueMask(self.ptr) }
+	}
+
+	pub fn channel(&self, channel: ColorChannel) -> Option<Bitmap> {
+		let ptr = unsafe { ffi::FreeImage_GetChannel(self.ptr, channel as i32) };
+		if ptr != ptr::null_mut() {
+			Some(Bitmap{ ptr })
+		}else{
+			None
+		}
+	}
+
+	pub fn set_channel(&mut self, bitmap: &Bitmap, channel: ColorChannel) -> Result<(), Error> {
+		if unsafe { ffi::FreeImage_SetChannel(self.ptr, bitmap.ptr, channel as i32) } != 0 {
+			Ok(())
+		}else{
+			Err(Error{msg: "Couldn't set channel"})
+		}
+	}
 }
 
 pub struct ScanLines<'a>{
