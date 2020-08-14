@@ -128,13 +128,16 @@ impl Bitmap {
 
     pub fn load_from_memory(buffer: &[u8]) -> Result<Bitmap,Error> {
 		unsafe {
-            let hmem = ffi::FreeImage_OpenMemory( mem::transmute(buffer.as_ptr()), buffer.len() as u32 );
+            let hmem = ffi::FreeImage_OpenMemory(
+				buffer.as_ptr() as *mut u8,
+				buffer.len() as u32
+			);
             if hmem.is_null(){
                 Err( Error{msg:"FreeImage_OpenMemory returned null"} )
             }else{
-                let fif = ffi::FreeImage_GetFileTypeFromMemory(mem::transmute(hmem), 0);
+                let fif = ffi::FreeImage_GetFileTypeFromMemory(hmem, 0);
                 if fif != Format::UNKNOWN  as i32{
-                    let ptr = ffi::FreeImage_LoadFromMemory(fif,mem::transmute(hmem),0);
+                    let ptr = ffi::FreeImage_LoadFromMemory(fif,hmem,0);
                     if ptr.is_null(){
                         Err( Error{msg:"FreeImage_LoadFromMemory returned null"} )
                     }else{
