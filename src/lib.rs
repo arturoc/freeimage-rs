@@ -21,6 +21,7 @@ pub struct Bitmap {
 }
 
 unsafe impl Send for Bitmap{}
+unsafe impl Sync for Bitmap{}
 
 impl Clone for Bitmap{
     fn clone(&self) -> Bitmap{
