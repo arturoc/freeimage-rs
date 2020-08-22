@@ -2,6 +2,7 @@
 
 #[link(name="freeimage")]
 #[cfg_attr(target_os="linux", link(name="stdc++"))]
+extern "C" {}
 
 pub const FREEIMAGE_MAJOR_VERSION: u32 = 3;
 pub const FREEIMAGE_MINOR_VERSION: u32 = 18;
