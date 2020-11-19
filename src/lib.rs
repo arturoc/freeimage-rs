@@ -100,7 +100,11 @@ pub fn supports_writting(fif: Format) -> bool{
 impl Bitmap {
 	pub fn load<P: AsRef<Path>>(filename: P) -> Result<Bitmap,Error> {
 		unsafe {
-            let cname = CString::new(filename.as_ref().to_str().unwrap().as_bytes()).unwrap();
+			let filename = filename
+				.as_ref()
+				.to_str()
+				.ok_or(Error{ msg: "Couldn't parse filename" })?;
+            let cname = CString::new(filename.as_bytes()).unwrap();
             let fif = ffi::FreeImage_GetFIFFromFilename(cname.as_ptr());
 			let ptr = ffi::FreeImage_Load(fif, cname.as_ptr(), 0);
 			if ptr.is_null(){
@@ -113,7 +117,11 @@ impl Bitmap {
 
 	pub fn load_with_format<P: AsRef<Path>>(fif: Format, filename: P) -> Result<Bitmap,Error> {
 		unsafe {
-            let cname = CString::new(filename.as_ref().to_str().unwrap().as_bytes()).unwrap();
+			let filename = filename
+				.as_ref()
+				.to_str()
+				.ok_or(Error{ msg: "Couldn't parse filename" })?;
+            let cname = CString::new(filename.as_bytes()).unwrap();
 			let ptr = ffi::FreeImage_Load( fif  as i32, cname.as_ptr(), 0 );
 			if ptr.is_null(){
 			    Err( Error{msg:"FreeImage_Load returned null"} )
@@ -167,8 +175,12 @@ impl Bitmap {
         }
     }
 
-	pub fn save(&self, filename: &str, flags: i32) -> Result<(),Error>{
+	pub fn save<P: AsRef<Path>>(&self, filename: P, flags: i32) -> Result<(),Error>{
 	    unsafe{
+			let filename = filename
+				.as_ref()
+				.to_str()
+				.ok_or(Error{ msg: "Couldn't parse filename" })?;
 	        let format = file_type_from_name(filename);
 	        if supports_writting(format){
 				ffi::FreeImage_Save(format as i32, self.ptr, CString::new(filename.as_bytes()).unwrap().as_ptr(),flags);
