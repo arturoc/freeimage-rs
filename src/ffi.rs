@@ -810,9 +810,6 @@ extern "C" {
     pub fn wcstof(__nptr: *const wchar_t, __endptr: *mut *mut wchar_t) -> f32;
 }
 extern "C" {
-    pub fn wcstold(__nptr: *const wchar_t, __endptr: *mut *mut wchar_t) -> u128;
-}
-extern "C" {
     pub fn wcstol(
         __nptr: *const wchar_t,
         __endptr: *mut *mut wchar_t,

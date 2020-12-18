@@ -78,11 +78,13 @@ pub fn init() {
 }
 
 unsafe fn file_type(filename: &str) -> Format {
-	ffi::FreeImage_GetFileType( CString::new(filename.as_bytes()).unwrap().as_ptr(), 0 ).into()
+	let cstr = CString::new(filename.as_bytes()).unwrap();
+	ffi::FreeImage_GetFileType( cstr.as_ptr(), 0 ).into()
 }
 
 unsafe fn file_type_from_name(filename: &str) -> Format {
-    ffi::FreeImage_GetFIFFromFilename(CString::new(filename.as_bytes()).unwrap().as_ptr()).into()
+	let cstr = CString::new(filename.as_bytes()).unwrap();
+    ffi::FreeImage_GetFIFFromFilename(cstr.as_ptr()).into()
 }
 
 pub fn supports_reading(fif: Format) -> bool {
@@ -183,7 +185,8 @@ impl Bitmap {
 				.ok_or(Error{ msg: "Couldn't parse filename" })?;
 	        let format = file_type_from_name(filename);
 	        if supports_writting(format){
-				ffi::FreeImage_Save(format as i32, self.ptr, CString::new(filename.as_bytes()).unwrap().as_ptr(),flags);
+				let cstr = CString::new(filename.as_bytes()).unwrap();
+				ffi::FreeImage_Save(format as i32, self.ptr, cstr.as_ptr(),flags);
                 Ok(())
 	        }else{
                 Err(Error{msg: "Format doesn't support writing"})
@@ -215,14 +218,13 @@ impl Bitmap {
 	}
 
 
-	fn bits_unsafe(&self) -> *const u8 {
-		unsafe { ffi::FreeImage_GetBits( self.ptr ) }
+	unsafe fn bits_unsafe(&self) -> *const u8 {
+		ffi::FreeImage_GetBits( self.ptr )
 	}
 
-	fn bits_unsafe_mut(&mut self) -> *mut u8 {
-		unsafe { ffi::FreeImage_GetBits( self.ptr ) as *mut u8}
+	unsafe fn bits_unsafe_mut(&mut self) -> *mut u8 {
+		ffi::FreeImage_GetBits( self.ptr ) as *mut u8
 	}
-
 
 	unsafe fn scanline_unsafe(&self, scanline: usize) -> *const u8 {
 		ffi::FreeImage_GetScanLine( self.ptr, scanline as c_int ) as *const u8
