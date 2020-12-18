@@ -278,6 +278,16 @@ impl Bitmap {
         }
     }
 
+    pub fn flip_horizontal(self) -> Result<Bitmap,Error>{
+        unsafe{
+            if ffi::FreeImage_FlipHorizontal(self.ptr) == 0{
+                Err(Error{msg:"Couldn't flip horizontally"})
+            }else{
+                Ok(self)
+            }
+        }
+    }
+
     pub fn rescale(&self, w: usize, h: usize, filter: Filter) -> Result<Bitmap, Error>{
         unsafe{
             let scaled_ptr = ffi::FreeImage_Rescale(self.ptr, w as i32, h as i32, filter as ffi::FREE_IMAGE_FILTER);
