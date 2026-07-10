@@ -5,14 +5,12 @@ description = "Rust idiomatic bindings for FreeImage"
 license = "MIT"
 homepage = "https://github.com/arturoc/freeimage-rs"
 repository = "https://github.com/arturoc/freeimage-rs"
-version = "0.2.2"
+version = "0.2.3"
+edition = "2021"
 
 [lib]
 name = "freeimage"
 path = "src/lib.rs"
 
 [dependencies]
-freeimage-sys = "3.18.0"
-
-# [patch.crates-io]
-# freeimage-sys = { path = "../freeimage-sys" }
+freeimage-sys = { version = "3.19.11", path = "../freeimage-sys" }

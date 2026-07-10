@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types,dead_code,non_snake_case,non_upper_case_globals)]
 
+use freeimage_sys as _;
 use std::slice;
 use std::mem;
 use std::ptr;
@@ -266,7 +267,7 @@ impl Bitmap {
 	    ScanLines{ bitmap: self, line: 0 }
 	}
 
-	pub fn scanlines_mut(&mut self) -> ScanLinesMut{
+	pub fn scanlines_mut(&mut self) -> ScanLinesMut<'_>{
 	    ScanLinesMut{ bitmap: self, line: 0 }
 	}
 
@@ -474,4 +475,24 @@ impl<'a> Iterator for ScanLinesMut<'a>{
 			}
 		}
     }
+}
+
+#[cfg(test)]
+mod tests {
+	use super::ffi;
+	use std::ffi::CStr;
+
+	#[test]
+	fn links_expected_freeimage_version() {
+		let version = unsafe { CStr::from_ptr(ffi::FreeImage_GetVersion()) };
+		assert_eq!(version.to_bytes(), b"3.19.0");
+	}
+
+	#[test]
+	fn initializes_bundled_plugins() {
+		unsafe {
+			ffi::FreeImage_Initialise(0);
+			ffi::FreeImage_DeInitialise();
+		}
+	}
 }
